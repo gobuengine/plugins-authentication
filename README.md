@@ -14,4 +14,4 @@ Players sign in with Google, Supabase, Firebase, Auth0 or any other service, as 
 
 Settings: Project Settings > Authentication (Google, Supabase, Firebase, Auth0, Custom; a block per
 platform). API: `Authentication.sign_in_with()`, `get_token()`, `check_token()`... Guide:
-https://gobuengine.org/guide/14-authentication
+https://gobuengine.org/plugins/01-authentication
