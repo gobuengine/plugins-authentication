@@ -3,7 +3,7 @@
 # ones that come with Gobu.
 target PluginAuthentication {
 	modules = [PluginAuthenticationBundle]
-	requires = [PluginAuthentication_windows, PluginAuthentication_web]
+	requires = [PluginAuthentication_windows, PluginAuthentication_web, PluginAuthentication_android]
 }
 
 # Windows: a DLL, for the editor and the games (debug and release).
@@ -26,4 +26,19 @@ target PluginAuthentication_web {
 		no_threads = true
 	}
 	link_flags = ["-sSIDE_MODULE=2", "-fvisibility=hidden"]
+}
+
+# Android: arm64-v8a (the ABI of Gobu's Android templates), with the NDK. It uses the template's
+# libc++_shared.so; the export puts it in the package's lib/arm64-v8a.
+target PluginAuthentication_android {
+	platform = android
+	type = shared
+	modules = [PluginAuthentication]
+	binary = libauthentication.android.arm64.so
+	binaries_dir = "../Plugins/Authentication/authentication/bin"
+	options {
+		plugin = true
+		arm64 = true
+	}
+	link_flags = ["-Wl,-soname,libauthentication.android.arm64.so"]
 }

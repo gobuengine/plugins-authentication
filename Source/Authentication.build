@@ -13,7 +13,9 @@ module PluginAuthenticationBundle {
 	generate {
 		copy "../authentication/plugin.json" "out=//Engine/Binaries/plugins/authentication/plugin.json"
 		copy "../authentication/web/sign_in.html" "out=//Engine/Binaries/plugins/authentication/web/sign_in.html"
+		copy "../authentication/doc_classes/Authentication.xml" "out=//Engine/Binaries/plugins/authentication/doc_classes/Authentication.xml"
 		copy "../authentication/bin/authentication.windows.x86_64.dll" "out=//Engine/Binaries/plugins/authentication/bin/authentication.windows.x86_64.dll"
 		copy "../authentication/bin/libauthentication.web.wasm32.wasm" "out=//Engine/Binaries/plugins/authentication/bin/libauthentication.web.wasm32.wasm"
+		copy "../authentication/bin/libauthentication.android.arm64.so" "out=//Engine/Binaries/plugins/authentication/bin/libauthentication.android.arm64.so"
 	}
 }

@@ -9,7 +9,8 @@
 	"entry": "gobu_plugin_init",
 	"libraries": {
 		"windows.x86_64": "bin/authentication.windows.x86_64.dll",
-		"web.wasm32": "bin/libauthentication.web.wasm32.wasm"
+		"web.wasm32": "bin/libauthentication.web.wasm32.wasm",
+		"android.arm64": "bin/libauthentication.android.arm64.so"
 	},
 	"web_files": {
 		"sign_in.html": "web/sign_in.html"

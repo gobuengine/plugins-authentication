@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="Authentication" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<brief_description>
+		Players sign in with Google, Supabase, Firebase, Auth0 or any other service, and a server checks their tokens.
+	</brief_description>
+	<description>
+		The Authentication plugin's singleton. Each service is set up in [b]Project Settings &gt; Authentication[/b], a section each, with a block per platform for what differs (each platform's own client). [method sign_in_with] signs in with one: in the player's browser on a computer, in a window of its own in a web game. The game gets the service's token ([method get_token]) to call its API, and the player's account ([method get_account]), [code]"&lt;service&gt;:&lt;id&gt;"[/code] ([code]google:1102…[/code], [code]supabase:4bade…[/code]).
+		An online game needs nothing else: when its server asks for a login ([b]Project Settings &gt; Online &gt; Login &gt; Check: Services[/b]), the token goes to [method Online.login] by itself, and the server checks it with this same plugin ([method check_token]).
+		[codeblock]
+		fn _on_sign_in_pressed() void {
+			Authentication.sign_in_with("google")
+		}
+
+		on Authentication.signed_in(token: String, data: Dictionary) {
+			print("Signed in as " + Authentication.get_account())
+		}
+
+		on Authentication.sign_in_failed(reason: String) {
+			print("Could not sign in: " + reason)
+		}
+		[/codeblock]
+	</description>
+	<tutorials>
+		<link title="Authentication">https://gobuengine.org/plugins/01-authentication</link>
+		<link title="Online games: players' accounts">https://gobuengine.org/guide/12-online</link>
+	</tutorials>
+	<methods>
+		<method name="account_of">
+			<return type="String" />
+			<param index="0" name="token" type="String" />
+			<description>
+				The account a token names ([code]"&lt;service&gt;:&lt;id&gt;"[/code]), read from it without checking it: empty when it is not of a service set up in [b]Project Settings &gt; Authentication[/b]. A server checks tokens with [method check_token].
+			</description>
+		</method>
+		<method name="cancel_sign_in">
+			<return type="void" />
+			<description>
+				Stops waiting for the sign-in that [method sign_in_with] started; [signal sign_in_failed] comes with the reason.
+			</description>
+		</method>
+		<method name="check_token">
+			<return type="void" />
+			<param index="0" name="token" type="String" />
+			<param index="1" name="done" type="Callable" />
+			<description>
+				(A server.) Whether [param token] is valid for this game, with the keys of the service that signed it (read once, by itself; a service that signs with a secret gives it in the [code]GOBU_AUTH_SECRET[/code] environment variable). [param done] gets [code](account: String, reason: String)[/code]: the account, empty when the token is not valid, and why. Online's server does this for each player; a server of another networking calls it itself.
+			</description>
+		</method>
+		<method name="get_account">
+			<return type="String" />
+			<description>
+				This game's account, [code]"&lt;service&gt;:&lt;id&gt;"[/code]: empty while it has not signed in.
+			</description>
+		</method>
+		<method name="get_session">
+			<return type="Dictionary" />
+			<description>
+				The service's whole answer to the last sign-in ([code]refresh_token[/code], [code]expires_in[/code]...): empty while it has not signed in.
+			</description>
+		</method>
+		<method name="get_token">
+			<return type="String" />
+			<description>
+				The session's token: the service's API takes it as [code]Authorization: Bearer &lt;token&gt;[/code]. Empty while it has not signed in.
+			</description>
+		</method>
+		<method name="is_signing_in">
+			<return type="bool" />
+			<description>
+				Whether a sign-in of [method sign_in_with] is waiting for the player.
+			</description>
+		</method>
+		<method name="sign_in_with">
+			<return type="int" enum="Error" />
+			<param index="0" name="provider" type="String" />
+			<param index="1" name="options" type="Dictionary" default="{}" />
+			<description>
+				Signs in with a service: [code]"google"[/code], [code]"supabase"[/code], [code]"firebase"[/code], [code]"auth0"[/code] or [code]"custom"[/code], set up in [b]Project Settings &gt; Authentication[/b]. [param options] wins over its section ([code]{"client_id": ...}[/code]). On a computer the service's page opens in the player's browser and comes back to this game (it waits up to 5 minutes); in a web game it opens in a window of its own (call it when the player presses a button: a browser blocks a window that opens by itself). Then [signal signed_in] or [signal sign_in_failed]. [constant ERR_BUSY] while another sign-in waits.
+			</description>
+		</method>
+		<method name="sign_out">
+			<return type="void" />
+			<description>
+				Forgets the session: its token, its account. Then [signal signed_out].
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="sign_in_failed">
+			<param index="0" name="reason" type="String" />
+			<description>
+				The sign-in of [method sign_in_with] did not end well: the player closed it, the service refused it, or it was canceled ([method cancel_sign_in]).
+			</description>
+		</signal>
+		<signal name="signed_in">
+			<param index="0" name="token" type="String" />
+			<param index="1" name="data" type="Dictionary" />
+			<description>
+				The player signed in: [param token] is the session's token ([method get_token]), [param data] the service's whole answer ([method get_session]).
+			</description>
+		</signal>
+		<signal name="signed_out">
+			<description>
+				The session was forgotten ([method sign_out]).
+			</description>
+		</signal>
+	</signals>
+</class>
