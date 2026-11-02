@@ -1,0 +1,6 @@
+gobu prefab 1
+
+node Hero : Node2D id 3 {
+	online_mode = 1
+	script = code
+}

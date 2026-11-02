@@ -1,0 +1,29 @@
+# The Authentication plugin (Gobu reads this folder through Engine/Source/external_plugins.txt):
+# `forja build PluginAuthentication` builds its libraries into ../authentication/bin and puts the plugin among the
+# ones that come with Gobu.
+target PluginAuthentication {
+	modules = [PluginAuthenticationBundle]
+	requires = [PluginAuthentication_windows, PluginAuthentication_web]
+}
+
+# Windows: a DLL, for the editor and the games (debug and release).
+target PluginAuthentication_windows {
+	type = shared
+	modules = [PluginAuthentication]
+	binary = authentication.windows.x86_64
+	binaries_dir = "../Plugins/Authentication/authentication/bin"
+	options { plugin = true }
+}
+
+# The web: a WebAssembly side module, for the templates without threads (as Colyseus).
+target PluginAuthentication_web {
+	platform = web
+	modules = [PluginAuthentication]
+	binary = libauthentication.web.wasm32.wasm
+	binaries_dir = "../Plugins/Authentication/authentication/bin"
+	options {
+		plugin = true
+		no_threads = true
+	}
+	link_flags = ["-sSIDE_MODULE=2", "-fvisibility=hidden"]
+}

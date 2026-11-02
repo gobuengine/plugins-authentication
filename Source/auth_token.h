@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  auth_token.h                                                        */
+/*  auth_token.h                                                          */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GOBU ENGINE                               */
@@ -30,11 +30,11 @@
 
 #pragma once
 
-#include "core/crypto/crypto.h"
-#include "core/string/ustring.h"
-#include "core/templates/hash_map.h"
-#include "core/templates/vector.h"
-#include "core/variant/dictionary.h"
+#include "gobu.hpp"
+
+#include <map>
+#include <string>
+#include <vector>
 
 // Who a player is, from the token its login service gave it (Supabase, Firebase, Auth0, Clerk, a game's own
 // server...): a JSON Web Token the service signed, checked with the service's public keys (its JWKS: RS256,
@@ -56,54 +56,55 @@ public:
 
 	static constexpr int LEEWAY = 60; // Seconds of clock difference with the service.
 
-	PackedStringArray issuers; // The "iss" it takes (any, when empty).
-	PackedStringArray audiences; // The "aud" it takes, any of them (a text or a list in the token); any, when empty.
-	String account_claim = "sub";
-	PackedByteArray secret; // HS256.
+	std::vector<std::string> issuers; // The "iss" it takes (any, when empty).
+	std::vector<std::string> audiences; // The "aud" it takes, any of them (a text or a list in the token); any, when empty.
+	std::string account_claim = "sub";
+	std::string secret; // HS256.
 
 	// The service's public keys (the JSON of its JWKS URL): RSA and P-256 keys, by "kid". Replaces the ones
-	// there were; an error when there is none it can use.
-	Error set_keys(const String &p_jwks);
-	int get_key_count() const { return keys.size(); }
-	bool has_keys() const { return !keys.is_empty() || !secret.is_empty(); }
+	// there were; false when there is none it can use.
+	bool set_keys(const std::string &p_jwks);
+	int get_key_count() const { return int(keys.size()); }
+	bool has_keys() const { return !keys.empty() || !secret.empty(); }
 
-	Status check(const String &p_token, int64_t p_now, String &r_account) const;
+	Status check(const std::string &p_token, int64_t p_now, std::string &r_account) const;
 	// What a player is told.
-	static String describe(Status p_status);
+	static std::string describe(Status p_status);
 
 	// A claim of a token, unchecked: its issuer (which service it is), a host's own account (it trusts itself).
-	static String read_claim(const String &p_token, const String &p_claim);
-	static bool decode(const String &p_token, Dictionary &r_header, Dictionary &r_claims, String &r_signed, PackedByteArray &r_signature);
-	static PackedByteArray base64url_decode(const String &p_text);
-	// A JWK as a key Crypto can verify with (r_alg: "RS256" or "ES256"), null when it is of no use.
-	static Ref<CryptoKey> key_from_jwk(const Dictionary &p_jwk, String &r_alg);
+	static std::string read_claim(const std::string &p_token, const std::string &p_claim);
+	static bool decode(const std::string &p_token, gobu::Value &r_header, gobu::Value &r_claims, std::string &r_signed, std::string &r_signature);
+	// A JWK as a key Crypto can verify with (r_alg: "RS256" or "ES256"), nil when it is of no use.
+	static gobu::Value key_from_jwk(const gobu::Value &p_jwk, std::string &r_alg);
 	// A JWT's ES256 signature (r and s, 32 bytes each) as mbedTLS reads it (DER).
-	static PackedByteArray ecdsa_signature_der(const PackedByteArray &p_raw);
+	static std::string ecdsa_signature_der(const std::string &p_raw);
 
-	// A login service of Project Settings > Online > Login, from its section: where its keys are, the issuers
-	// its tokens come from, and for whom they are.
+	// A login service of Project Settings > Authentication, from its section: where its keys are, the issuers its
+	// tokens come from, and for whom they are.
 	struct Service {
-		String name; // "google", "supabase", "firebase", "auth0" or "custom": the start of its accounts.
-		String keys_url;
-		PackedStringArray issuers;
-		PackedStringArray audiences; // Each platform's client: a token for any of them is for this game.
-		String account_claim = "sub";
+		std::string name; // "google", "supabase", "firebase", "auth0" or "custom": the start of its accounts.
+		std::string keys_url;
+		std::vector<std::string> issuers;
+		std::vector<std::string> audiences; // Each platform's client: a token for any of them is for this game.
+		std::string account_claim = "sub";
 	};
 	// The services whose sections are filled in. Custom goes last: without an issuer (a secret only, p_secret),
 	// it takes the tokens no other service names.
-	static Vector<Service> services_from_settings(bool p_secret);
+	static std::vector<Service> services_from_settings(bool p_secret);
 	// The service a token's issuer is of (-1: none).
-	static int service_for(const Vector<Service> &p_services, const String &p_issuer);
-	static String auth0_domain(const String &p_domain); // "tenant.auth0.com", however it was written.
+	static int service_for(const std::vector<Service> &p_services, const std::string &p_issuer);
+	static std::string auth0_domain(const std::string &p_domain); // "tenant.auth0.com", however it was written.
 	// The platform block of a section this game reads: "desktop", "web", "android" or "ios".
-	static String platform();
+	static std::string platform();
 	// The client IDs of every platform block of a section that has them (each platform signs in with its own).
-	static PackedStringArray client_ids(const String &p_section);
+	static std::vector<std::string> client_ids(const std::string &p_section);
+	// A setting as text, without spaces at the ends ("" when the project has none).
+	static std::string text_setting(const std::string &p_name);
 
 private:
 	struct Key {
-		String alg;
-		Ref<CryptoKey> key;
+		std::string alg;
+		gobu::Value key; // CryptoKey.
 	};
-	HashMap<String, Key> keys; // By "kid" ("" a key without one).
+	std::map<std::string, Key> keys; // By "kid" ("" a key without one).
 };

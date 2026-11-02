@@ -1,0 +1,3 @@
+interface marcador player {
+	@replicated @persistent live puntos : int = 0
+}

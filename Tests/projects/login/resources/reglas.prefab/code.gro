@@ -1,0 +1,9 @@
+module Reglas
+
+fn _ready() void {
+	print("TMPEV reglas listas")
+}
+
+on Online.player_joined(id: int) {
+	print("TMPEV cuenta " + str(id) + " " + Online.get_account(id))
+}

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>Signing in</title>
+<style>body{margin:0;height:100vh;display:grid;place-items:center;font-family:system-ui,sans-serif;background:#1c2128;color:#aab1bb}</style>
+</head>
+<body>
+<p>Signing in...</p>
+<script>
+// The page a web game's sign-in comes back to (Authentication.sign_in_with()): it tells the game where it came
+// back, and closes. The web export writes it next to the game as "<page>.sign_in.html".
+const message = { gobuSignIn: location.href };
+try { if (window.opener) { window.opener.postMessage(message, location.origin); } } catch (e) { /* Not the game's window. */ }
+try { const channel = new BroadcastChannel('gobu_sign_in'); channel.postMessage(message); channel.close(); } catch (e) { /* Old browser. */ }
+setTimeout(function () { window.close(); }, 500);
+</script>
+</body>
+</html>

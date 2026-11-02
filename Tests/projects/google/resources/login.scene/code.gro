@@ -1,0 +1,78 @@
+module Login
+
+use node::Http as http : HTTPRequest
+
+SUPABASE_URL :: "http://127.0.0.1:18765"
+SUPABASE_KEY :: "anon-key"
+
+Credenciales :: struct {
+	email : String = ""
+	password : String = ""
+}
+
+Sesion :: struct {
+	access_token : String = ""
+}
+
+mut ir_al_nivel : bool = false
+
+fn _ready() void {
+	mut datos : Credenciales = Credenciales.from_json("{}")
+	for arg in OS.get_cmdline_user_args() {
+		if arg.begins_with("--email=") {
+			datos.email = arg.trim_prefix("--email=")
+		} elif arg.begins_with("--clave=") {
+			datos.password = arg.trim_prefix("--clave=")
+		} elif arg.begins_with("--token=") {
+			print("TMPLOGIN token a mano")
+			Online.login(arg.trim_prefix("--token="))
+			ir_al_nivel = true
+			return
+		} elif arg == "--google" or arg == "--google-niega" {
+			print("TMPLOGIN google")
+			mut cliente : String = "juego-de-prueba.apps.googleusercontent.com"
+			if arg == "--google-niega" {
+				cliente = "niega"
+			}
+			Authentication.sign_in_with("google", {"client_id": cliente, "client_secret": "secreto-cliente", "authorize_url": SUPABASE_URL + "/o/oauth2/v2/auth", "token_url": SUPABASE_URL + "/token"})
+			return
+		} elif arg == "--supabase-google" {
+			print("TMPLOGIN supabase con google")
+			Authentication.sign_in_with("supabase", {"url": SUPABASE_URL, "key": SUPABASE_KEY, "provider": "google"})
+			return
+		} elif arg == "--sin-login" {
+			print("TMPLOGIN sin login")
+			ir_al_nivel = true
+			return
+		}
+	}
+	print("TMPLOGIN pidiendo " + datos.email)
+	http.request(SUPABASE_URL + "/auth/v1/token?grant_type=password", ["apikey: " + SUPABASE_KEY, "Content-Type: application/json"], HTTPClient.METHOD_POST, datos.to_json())
+}
+
+on http.request_completed(result: int, code: int, headers: PackedStringArray, body: PackedByteArray) {
+	if code != 200 {
+		print("TMPLOGIN fallo " + str(code) + " " + body.get_string_from_utf8())
+		return
+	}
+	mut sesion : Sesion = Sesion.from_json(body.get_string_from_utf8())
+	print("TMPLOGIN token recibido")
+	Online.login(sesion.access_token)
+	SceneManager.load("main")
+}
+
+fn _process(delta: float) void {
+	if ir_al_nivel {
+		ir_al_nivel = false
+		SceneManager.load("main")
+	}
+}
+
+on Authentication.signed_in(token: String, data: Dictionary) {
+	print("TMPLOGIN firmado " + str(data.has("refresh_token")) + " " + str(data.has("id_token")))
+	SceneManager.load("main")
+}
+
+on Authentication.sign_in_failed(reason: String) {
+	print("TMPLOGIN no firmado " + reason)
+}

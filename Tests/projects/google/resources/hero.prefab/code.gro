@@ -1,0 +1,23 @@
+module Hero
+
+use node::Hero as hero : Node2D
+use interface::marcador as m
+
+mut t : float = 0.0
+
+fn _ready() void {
+	print("TMPGM " + str(hero.name) + " " + str(hero.position))
+}
+
+@action fn sumar() void {
+	m.puntos += 10
+}
+
+fn _process(delta: float) void {
+	t += delta
+	if t >= 1.0 {
+		t = 0.0
+		sumar()
+		print("TMPPTS " + str(hero.name) + " " + str(m.puntos))
+	}
+}

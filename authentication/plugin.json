@@ -1,8 +1,17 @@
 {
 	"id": "authentication",
 	"name": "Authentication",
+	"version": "1.0.0",
 	"description": "Players sign in with Google, Supabase, Firebase, Auth0 or any other service: the game gets their token, to call the service's API or to join an online game, and a server checks it. Set it up in Project Settings > Authentication.",
 	"author": "Gobu",
 	"category": "Services",
-	"built_in": true
+	"api_version": 3,
+	"entry": "gobu_plugin_init",
+	"libraries": {
+		"windows.x86_64": "bin/authentication.windows.x86_64.dll",
+		"web.wasm32": "bin/libauthentication.web.wasm32.wasm"
+	},
+	"web_files": {
+		"sign_in.html": "web/sign_in.html"
+	}
 }

@@ -1,0 +1,33 @@
+config_version=5
+
+[application]
+
+config/name="login_proj"
+run/main_scene="res://login.scene"
+config/is_2d_project=true
+game_mode/player="res://hero.prefab"
+game_mode/rules="res://reglas.prefab"
+
+[online]
+session/server_level="res://main.scene"
+login/check=1
+
+[authentication]
+
+supabase/url="http://127.0.0.1:18765"
+supabase/anon_key="anon-key"
+supabase/desktop/port=0
+custom/keys_url="http://127.0.0.1:18765/oauth2/v3/certs"
+custom/issuer="https://accounts.google.com"
+custom/audience="juego-de-prueba.apps.googleusercontent.com, web-de-prueba.apps.googleusercontent.com"
+custom/authorize_url="http://127.0.0.1:18765/o/oauth2/v2/auth"
+custom/token_url="http://127.0.0.1:18765/token"
+custom/scope="openid email profile"
+custom/desktop/client_id="juego-de-prueba.apps.googleusercontent.com"
+custom/desktop/client_secret="secreto-cliente"
+custom/desktop/port=0
+custom/desktop/redirect_uri="http://localhost:43211/callback"
+
+[plugins]
+
+enabled=PackedStringArray("authentication")

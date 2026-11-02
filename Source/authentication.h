@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  auth_token.h                                                        */
+/*  authentication.h                                                      */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GOBU ENGINE                               */
@@ -33,113 +33,110 @@
 #include "auth_sign_in.h"
 #include "auth_token.h"
 
-#include "core/io/tcp_server.h"
-#include "core/object/object.h"
-#include "core/templates/local_vector.h"
+#include <functional>
+#include <string>
+#include <vector>
 
-class HTTPRequest;
-
-// The Authentication plugin (Project Settings > Plugins: it comes with Gobu, a project adds it): players sign in
-// with a service (Google, Supabase, Firebase, Auth0 or any other) and the game has their token, to call the
-// service's API or to join an online game; a server checks those tokens with each service's keys. Its class, its
-// singleton and its settings (Project Settings > Authentication) exist only in a project that enabled it.
-class Authentication : public Object {
-	GDCLASS(Authentication, Object);
-
+// The Authentication plugin: players sign in with a service (Google, Supabase, Firebase, Auth0 or any other) and
+// the game has their token, to call the service's API or to join an online game; a server checks those tokens
+// with each service's keys. A library of its own (gobu_plugin.h): Gobu loads it only in a project that enabled it,
+// and then there are its class, its singleton and its settings (Project Settings > Authentication).
+class Authentication {
 public:
-	static constexpr const char *PLUGIN_ID = "authentication";
+	static constexpr const char *CLASS_NAME = "Authentication";
 	// The HS256 secret of a service that signs with one, on the server only: never in the project (it goes with
 	// the game).
 	static constexpr const char *SECRET_ENVIRONMENT = "GOBU_AUTH_SECRET";
 
-private:
 	static Authentication *singleton;
+	GobuObject *self = nullptr; // Its object: the singleton.
 
+	// The plugin's class: its methods, signals and settings (gobu_plugin_init()).
+	static bool register_class();
+	// Once a frame (the plugin's process callback).
+	void frame();
+
+	// Signs in with a service in the player's browser ("google", "supabase", "auth0", "oauth": the Custom one), on
+	// computers and in web games; then signed_in, or sign_in_failed. An Error code.
+	int sign_in_with(const std::string &p_provider, const gobu::Value &p_options);
+	void cancel_sign_in();
+	bool is_signing_in() const { return signing_in; }
+	void sign_out();
+
+	std::string get_token() const { return token; }
+	gobu::Value get_session() const { return session; }
+	// "<service>:<id>": the one this game signed in with, or any token's (unchecked: what it says).
+	std::string get_account() const;
+	std::string account_of(const std::string &p_token) const;
+
+	// A server: whether a token is one of the services of the settings, for this game; then p_done(account,
+	// reason) (the account empty when it is not). It may answer later: the service's keys are read first.
+	void check_token(const std::string &p_token, const gobu::Value &p_done);
+
+	explicit Authentication(GobuObject *p_self);
+	~Authentication();
+
+private:
 	// This game's session: the token it signed in with, and the service's whole answer.
-	String token;
-	Dictionary session;
+	std::string token;
+	gobu::Value session;
+
+	// What waits for the next frame (as call_deferred: never inside the caller).
+	std::vector<std::function<void()>> later;
+	void _later(std::function<void()> p_function);
 
 	// Checking tokens (a server): the services of the settings, each with its own keys, read when a token needs
 	// them (again if one comes with a key it does not have, at most once a minute).
 	struct Service {
 		AuthToken::Service settings;
 		AuthToken checker;
-		ObjectID keys_request;
+		GobuObjectId keys_request = 0;
 		uint64_t keys_read_msec = 0;
 		bool keys_reading = false;
 	};
 	struct Waiting {
-		String token;
-		String service;
-		Callable done;
+		std::string token;
+		std::string service;
+		gobu::Value done;
 	};
-	LocalVector<Service> services;
-	LocalVector<Waiting> waiting;
+	std::vector<Service> services;
+	std::vector<Waiting> waiting;
 	void _configure_services();
-	int _find_service(const String &p_name) const;
-	void _read_keys(const String &p_service);
-	void _on_keys_read(int p_result, int p_code, const PackedStringArray &p_headers, const PackedByteArray &p_body, const String &p_service);
+	int _find_service(const std::string &p_name) const;
+	void _read_keys(const std::string &p_service);
+	void _on_keys_read(int p_result, int p_code, const std::string &p_body, const std::string &p_service);
 
 	// Signing in in the browser (auth_sign_in.cpp): the address of this computer where the browser comes back
 	// (or, in a web game, the page that does), what it asked there, and the code traded for the token.
 	struct SignInVisit {
-		Ref<StreamPeerTCP> peer;
-		PackedByteArray received;
+		gobu::Value peer; // StreamPeerTCP.
+		std::string received;
 		uint64_t since = 0;
 	};
 	bool signing_in = false;
 	bool sign_in_exchanging = false;
 	AuthSignIn::Flow sign_in_flow;
-	LocalVector<Ref<TCPServer>> sign_in_servers;
-	LocalVector<SignInVisit> sign_in_visits;
-	String sign_in_verifier; // PKCE.
-	String sign_in_state;
-	String sign_in_nonce; // A web game's ID token (Google) carries it.
-	String sign_in_redirect;
-	Ref<RefCounted> sign_in_web_callback; // A web game: the JavaScript callback its page's answer comes to.
+	std::vector<gobu::Value> sign_in_servers; // TCPServer.
+	std::vector<SignInVisit> sign_in_visits;
+	std::string sign_in_verifier; // PKCE.
+	std::string sign_in_state;
+	std::string sign_in_nonce; // A web game's ID token (Google) carries it.
+	std::string sign_in_redirect;
+	gobu::Value sign_in_web_callback; // A web game: the JavaScript callback its page's answer comes to.
 	uint64_t sign_in_deadline = 0;
-	ObjectID sign_in_page_request; // Following the page itself (AuthSignIn::FOLLOW_ENVIRONMENT).
-	ObjectID sign_in_token_request;
-	HTTPRequest *_internal_request(ObjectID &r_id, const String &p_name, const Callable &p_done);
+	GobuObjectId sign_in_page_request = 0; // Following the page itself (AuthSignIn::FOLLOW_ENVIRONMENT).
+	GobuObjectId sign_in_token_request = 0;
+	// An HTTPRequest of its own in the scene (reused): p_done(result, code, body).
+	GobuObject *_internal_request(GobuObjectId &r_id, const std::string &p_name, std::function<void(int, int, const std::string &)> p_done);
 	void _sign_in_frame();
-	Error _sign_in_web(const AuthSignIn::Flow &p_flow);
-	void _on_web_sign_in(const Array &p_args);
-	void _sign_in_follow(const String &p_address);
-	String _sign_in_refusal(const Dictionary &p_params) const;
-	void _sign_in_came_back(const Dictionary &p_params);
-	void _on_sign_in_token(int p_result, int p_code, const PackedStringArray &p_headers, const PackedByteArray &p_body);
-	void _on_sign_in_page(int p_result, int p_code, const PackedStringArray &p_headers, const PackedByteArray &p_body);
+	int _sign_in_web(const AuthSignIn::Flow &p_flow);
+	void _on_web_sign_in(const gobu::Value &p_args);
+	void _sign_in_follow(const std::string &p_address);
+	std::string _sign_in_refusal(const gobu::Value &p_params) const;
+	void _sign_in_came_back(const gobu::Value &p_params);
+	void _on_sign_in_token(int p_result, int p_code, const std::string &p_body);
 	void _sign_in_stop();
-	void _sign_in_end(const String &p_token, const Dictionary &p_data, const String &p_error);
-	void _sign_in_failed(const String &p_reason);
-
-	// For Online (its hooks): a server checks a player's token; a game's own account.
-	static void _online_check_token(const String &p_token, const Callable &p_done);
-	static String _online_account_of(const String &p_token);
-
-protected:
-	static void _bind_methods();
-
-public:
-	static Authentication *get_singleton() { return singleton; }
-
-	// Signs in with a service in the player's browser ("google", "supabase", "auth0", "oauth": the Custom one), on
-	// computers and in web games; then signed_in, or sign_in_failed.
-	Error sign_in_with(const String &p_provider, const Dictionary &p_options = Dictionary());
-	void cancel_sign_in();
-	bool is_signing_in() const { return signing_in; }
-	void sign_out();
-
-	String get_token() const { return token; }
-	Dictionary get_session() const { return session; }
-	// "<service>:<id>": the one this game signed in with, or any token's (unchecked: what it says).
-	String get_account() const;
-	String account_of(const String &p_token) const;
-
-	// A server: whether a token is one of the services of the settings, for this game; then p_done(account,
-	// reason) (the account empty when it is not). It may answer later: the service's keys are read first.
-	void check_token(const String &p_token, const Callable &p_done);
-
-	Authentication();
-	~Authentication();
+	void _sign_in_end(const std::string &p_token, const gobu::Value &p_data, const std::string &p_error);
+	void _sign_in_failed(const std::string &p_reason);
+	void _emit(const char *p_signal, std::initializer_list<gobu::Value> p_args = {});
 };

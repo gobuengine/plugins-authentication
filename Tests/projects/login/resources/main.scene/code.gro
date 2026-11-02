@@ -1,0 +1,50 @@
+module Main
+
+mut t : float = 0.0
+mut vivo : float = 0.0
+mut salir : float = 1000.0
+
+fn _ready() void {
+	print("TMPEV nivel main")
+	for arg in OS.get_cmdline_user_args() {
+		if arg.begins_with("--salir=") {
+			salir = arg.trim_prefix("--salir=").to_float()
+		} elif arg == "--unirse" {
+			print("TMPEV me uno sin login")
+			Online.join()
+		}
+	}
+}
+
+on Online.logged_in(cuenta: String) {
+	print("TMPLOGIN dentro " + cuenta)
+}
+
+on Online.login_failed(motivo: String) {
+	print("TMPLOGIN rechazado " + motivo)
+}
+
+on Online.kicked(motivo: String) {
+	print("TMPLOGIN echado " + motivo)
+}
+
+on Online.disconnected() {
+	print("TMPEV disconnected")
+}
+
+on Online.player_left(id: int) {
+	print("TMPEV left " + str(id))
+}
+
+fn _process(delta: float) void {
+	t += delta
+	vivo += delta
+	if t >= 2.0 {
+		t = 0.0
+		print("TMPEV jugadores " + str(Online.get_player_ids()) + " yo " + str(Online.get_my_id()) + " cuenta " + Online.get_account(Online.get_my_id()))
+	}
+	if vivo >= salir {
+		print("TMPEV salgo")
+		get_tree().quit()
+	}
+}

@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  auth_token.h                                                        */
+/*  text.h                                                                */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GOBU ENGINE                               */
@@ -28,42 +28,33 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "register_types.h"
+#pragma once
 
-#include "authentication.h"
+#include <string>
+#include <vector>
 
-#include "core/config/engine.h"
-#include "core/object/class_db.h"
-#include "core/plugin/plugin_manager.h"
+// Text as UTF-8 bytes (std::string), and binary data the same way.
+namespace text {
 
-static Authentication *authentication = nullptr;
+std::string strip(const std::string &p_text); // Spaces, tabs and line ends at both ends.
+std::string lower(const std::string &p_text); // ASCII.
+bool starts_with(const std::string &p_text, const std::string &p_prefix);
+bool ends_with(const std::string &p_text, const std::string &p_suffix);
+bool contains(const std::string &p_text, const std::string &p_part);
+std::string trim_prefix(const std::string &p_text, const std::string &p_prefix);
+std::string trim_suffix(const std::string &p_text, const std::string &p_suffix);
+std::string replace(const std::string &p_text, const std::string &p_from, const std::string &p_to);
+// The parts between each p_separator (empty ones too, unless p_skip_empty).
+std::vector<std::string> split(const std::string &p_text, char p_separator, bool p_skip_empty = false);
+bool has(const std::vector<std::string> &p_list, const std::string &p_item);
 
-// A project that enabled the plugin: what it brings.
-static void _enable_authentication() {
-	GDREGISTER_CLASS(Authentication);
-	authentication = memnew(Authentication);
-	Engine::get_singleton()->add_singleton(Engine::Singleton("Authentication", Authentication::get_singleton()));
-}
+std::string uri_encode(const std::string &p_text); // All but A-Z a-z 0-9 - _ . ~ as %XX.
+std::string uri_decode(const std::string &p_text);
+std::string xml_escape(const std::string &p_text);
 
-void initialize_authentication_module(ModuleInitializationLevel p_level) {
-	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
-		return;
-	}
-	GobuPlugins::BuiltIn plugin;
-	plugin.id = Authentication::PLUGIN_ID;
-	plugin.name = "Authentication";
-	plugin.description = "Players sign in with Google, Supabase, Firebase, Auth0 or any other service: the game gets their token, to call the service's API or to join an online game, and a server checks it. Set it up in Project Settings > Authentication.";
-	plugin.category = "Services";
-	plugin.classes.push_back("Authentication");
-	plugin.enable = &_enable_authentication;
-	GobuPlugins::register_built_in(plugin);
-}
+std::string base64(const std::string &p_bytes);
+std::string base64url(const std::string &p_bytes); // URL-safe, without padding.
+// Standard or URL-safe, with or without padding; false when it is not base64.
+bool base64_decode(const std::string &p_text, std::string &r_bytes);
 
-void uninitialize_authentication_module(ModuleInitializationLevel p_level) {
-	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE || !authentication) {
-		return;
-	}
-	Engine::get_singleton()->remove_singleton("Authentication");
-	memdelete(authentication);
-	authentication = nullptr;
-}
+} // namespace text

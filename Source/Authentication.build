@@ -1,0 +1,19 @@
+# The Authentication plugin's library: it has nothing of Gobu but gobu_plugin.h, so it is a library of its own,
+# never part of Gobu's "*" (Gobu loads it only in a project that enabled the plugin).
+module PluginAuthentication {
+	standalone = true
+	link_objects = true # Into the library itself: nothing of it would be taken from an archive.
+	sources = ["*.cpp"]
+}
+
+# The plugin's folder (../authentication: plugin.json, the page of web sign-ins, the libraries) among the plugins
+# that come with Gobu, next to the editor: Engine/Binaries/plugins/authentication.
+module PluginAuthenticationBundle {
+	standalone = true
+	generate {
+		copy "../authentication/plugin.json" "out=//Engine/Binaries/plugins/authentication/plugin.json"
+		copy "../authentication/web/sign_in.html" "out=//Engine/Binaries/plugins/authentication/web/sign_in.html"
+		copy "../authentication/bin/authentication.windows.x86_64.dll" "out=//Engine/Binaries/plugins/authentication/bin/authentication.windows.x86_64.dll"
+		copy "../authentication/bin/libauthentication.web.wasm32.wasm" "out=//Engine/Binaries/plugins/authentication/bin/libauthentication.web.wasm32.wasm"
+	}
+}

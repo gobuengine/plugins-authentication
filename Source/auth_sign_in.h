@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  auth_sign_in.h                                                      */
+/*  auth_sign_in.h                                                        */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GOBU ENGINE                               */
@@ -30,15 +30,16 @@
 
 #pragma once
 
-#include "core/string/ustring.h"
-#include "core/variant/dictionary.h"
-#include "core/variant/variant.h"
+#include "gobu.hpp"
+
+#include <string>
+#include <vector>
 
 // Signing in with a service in the system's browser, as games and apps on a computer do (OAuth 2.0 for
 // installed apps, RFC 8252, with PKCE, RFC 7636): the game opens the service's page, the player signs in
 // there (Google, Discord, a Supabase project's providers...), and the browser comes back to an address of
 // this computer where the game listens (http://127.0.0.1:<port>); the game then trades the code it got for
-// the token. Authentication.sign_in_with() runs it (online_sign_in.cpp); these are its pieces.
+// the token. Authentication.sign_in_with() runs it (authentication.cpp); these are its pieces.
 struct AuthSignIn {
 	// For tests and headless runs: the game opens the sign-in page itself, as a browser that follows its
 	// redirects (a service that signs in at once, such as a test one, comes back to it without a player).
@@ -46,43 +47,42 @@ struct AuthSignIn {
 	static constexpr double TIMEOUT = 300.0; // Seconds for the player to sign in.
 
 	struct Flow {
-		String authorize_url;
-		String token_url;
-		String client_id;
-		String client_secret; // Some services ask for it also from installed games (Google's "Desktop app").
-		String scope;
-		Dictionary params; // More of the sign-in page's parameters (prompt, login_hint...).
-		String token_field; // Of the service's answer; empty: id_token when there is one, else access_token.
+		std::string authorize_url;
+		std::string token_url;
+		std::string client_id;
+		std::string client_secret; // Some services ask for it also from installed games (Google's "Desktop app").
+		std::string scope;
+		gobu::Value params; // More of the sign-in page's parameters (prompt, login_hint...): a Dictionary.
+		std::string token_field; // Of the service's answer; empty: id_token when there is one, else access_token.
 		int port = 0; // Where the game listens; 0: any free one (services that ask for an exact address: fixed).
 		// The return address as the service has it registered ("http://localhost:43210"), exactly; empty:
 		// http://127.0.0.1:<port>/. The game listens where it can come: 127.0.0.1, and ::1 for "localhost".
-		String redirect_uri;
-		PackedStringArray listen_on;
+		std::string redirect_uri;
+		std::vector<std::string> listen_on;
 		// In a web game (a browser keeps no secret): Google's ID token straight back in the page's address
 		// (OpenID Connect's implicit flow, with a nonce); the others, a code with PKCE traded by the game.
 		bool web = false;
 		bool id_token_back = false;
 		// Supabase Auth: its own parameters (provider, redirect_to) and code exchange (grant_type=pkce).
 		bool supabase = false;
-		String supabase_url;
-		String supabase_key;
-		String supabase_provider;
+		std::string supabase_url;
+		std::string supabase_key;
+		std::string supabase_provider;
 	};
 
 	// "google", "supabase", "auth0" or "oauth" (any other service: its addresses), and the options.
-	static Error make_flow(const String &p_provider, const Dictionary &p_options, Flow &r_flow, String &r_error, bool p_web = false);
-	// The options, with what the service's section of Project Settings > Online > Login says (the ones given
-	// win).
-	static Dictionary options_from_settings(const String &p_provider, const Dictionary &p_options);
+	static bool make_flow(const std::string &p_provider, const gobu::Value &p_options, Flow &r_flow, std::string &r_error, bool p_web = false);
+	// The options, with what the service's section of Project Settings > Authentication says (the ones given win).
+	static gobu::Value options_from_settings(const std::string &p_provider, const gobu::Value &p_options);
 	// The sign-in page, with what the game sends: where to come back, and the PKCE challenge and state.
-	static String authorize_address(const Flow &p_flow, const String &p_redirect, const String &p_challenge, const String &p_state, const String &p_nonce = String());
+	static std::string authorize_address(const Flow &p_flow, const std::string &p_redirect, const std::string &p_challenge, const std::string &p_state, const std::string &p_nonce = std::string());
 	// What came back in the page's address: its query and, in a web game, its fragment (#id_token=...).
-	static Dictionary parse_answer(const String &p_address);
+	static gobu::Value parse_answer(const std::string &p_address);
 
-	static String random_text(int p_bytes); // URL-safe base64 of random bytes.
-	static String pkce_challenge(const String &p_verifier); // S256.
-	static String query(const Dictionary &p_params); // a=1&b=2, percent-encoded.
-	static Dictionary parse_query(const String &p_query);
+	static std::string random_text(int p_bytes); // URL-safe base64 of random bytes.
+	static std::string pkce_challenge(const std::string &p_verifier); // S256.
+	static std::string query(const gobu::Value &p_params); // a=1&b=2, percent-encoded.
+	static gobu::Value parse_query(const std::string &p_query);
 	// The page the browser shows once it came back to the game.
-	static String page(const String &p_game, bool p_signed_in, const String &p_detail);
+	static std::string page(const std::string &p_game, bool p_signed_in, const std::string &p_detail);
 };

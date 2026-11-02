@@ -1,0 +1,8 @@
+gobu scene 1
+
+node Main : Node2D id 1 {
+	script = code
+	node Inicio : PlayerStart2D id 2 {
+		position = Vector2(100, 50)
+	}
+}

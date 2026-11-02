@@ -1,0 +1,8 @@
+# The tests' runs: logs, each game's APPDATA, the plugin copied into the test projects, Gobu's caches.
+Tests/.run/
+Tests/projects/*/plugins/
+Tests/projects/*/.gobu/
+Tests/projects/*/.cache/
+# The test keys (made with openssl on the first run).
+Tests/tools/*.pem
+__pycache__/
