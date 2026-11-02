@@ -7,6 +7,7 @@
 	"category": "Services",
 	"api_version": 3,
 	"entry": "gobu_plugin_init",
+	"android_permissions": ["INTERNET"],
 	"libraries": {
 		"windows.x86_64": "bin/authentication.windows.x86_64.dll",
 		"web.wasm32": "bin/libauthentication.web.wasm32.wasm",
