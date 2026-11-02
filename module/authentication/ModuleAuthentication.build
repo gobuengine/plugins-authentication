@@ -1,0 +1,4 @@
+module ModuleAuthentication {
+	sources = ["*.cpp"]
+	defines = [GOBU_MODULE]
+}

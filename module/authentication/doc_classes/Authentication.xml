@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="Authentication" inherits="Object" api_type="core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../doc/class.xsd">
+	<brief_description>
+		Players sign in with Google, Supabase, Firebase, Auth0 or any other service. A plugin that comes with Gobu.
+	</brief_description>
+	<description>
+		The Authentication plugin: it comes with Gobu, and a project that wants it adds it in [b]Project Settings &gt; Plugins[/b] (a folder [code]plugins/authentication[/code], as any plugin); only then this class, its singleton and its settings exist. It works on every platform.
+		Each service has its section in [b]Project Settings &gt; Authentication[/b] (Google, Supabase, Firebase, Auth0, Custom), with what the service shares and a block per platform for each platform's own client (Desktop, Web, Android, iOS). [method sign_in_with] signs in with one in the player's browser, and the game keeps its token ([method get_token]): to call the service's API ([code]Authorization: Bearer &lt;token&gt;[/code]), or to join an online game, where the server checks it with this same plugin ([method check_token]).
+	</description>
+	<tutorials>
+		<link title="Authentication">https://gobuengine.org/guide/14-authentication</link>
+	</tutorials>
+	<methods>
+		<method name="account_of" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="token" type="String" />
+			<description>
+				The account a token names, [code]"&lt;service&gt;:&lt;id&gt;"[/code] ([code]"google:1102..."[/code]), by its issuer among the services of the settings; unchecked (what it says). Empty if it is of no service of the settings.
+			</description>
+		</method>
+		<method name="cancel_sign_in">
+			<return type="void" />
+			<description>
+				Stops waiting for the sign-in that [method sign_in_with] started ([signal sign_in_failed] says it was cancelled).
+			</description>
+		</method>
+		<method name="check_token">
+			<return type="void" />
+			<param index="0" name="token" type="String" />
+			<param index="1" name="done" type="Callable" />
+			<description>
+				A server: whether [param token] is a token of a service of the settings, for this game (for any platform's client), signed with the service's keys (read the first time, and again when a token comes with a key it does not have) or the secret of the [code]GOBU_AUTH_SECRET[/code] environment variable (HS256), and not expired. Then [param done] is called with the account ([code]"&lt;service&gt;:&lt;id&gt;"[/code], empty if it is not valid) and the reason. It may be called later: when the keys are read first. An online game's server uses it by itself ([b]Project Settings &gt; Online &gt; Login &gt; Check: Services[/b]).
+			</description>
+		</method>
+		<method name="get_account" qualifiers="const">
+			<return type="String" />
+			<description>
+				The account this game signed in with: [code]"&lt;service&gt;:&lt;id&gt;"[/code]. Empty without a session.
+			</description>
+		</method>
+		<method name="get_session" qualifiers="const">
+			<return type="Dictionary" />
+			<description>
+				The service's whole answer when this game signed in ([code]refresh_token[/code], [code]expires_in[/code], the user...).
+			</description>
+		</method>
+		<method name="get_token" qualifiers="const">
+			<return type="String" />
+			<description>
+				The token this game signed in with: for the service's API ([code]Authorization: Bearer &lt;token&gt;[/code]). Empty without a session.
+			</description>
+		</method>
+		<method name="is_signing_in" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Whether a sign-in of [method sign_in_with] is going on.
+			</description>
+		</method>
+		<method name="sign_in_with">
+			<return type="int" enum="Error" />
+			<param index="0" name="provider" type="String" />
+			<param index="1" name="options" type="Dictionary" default="{}" />
+			<description>
+				Signs in with a service in the player's browser. On a computer (OAuth 2.0 for installed apps, with PKCE): it opens the service's page, the player signs in there, and the browser comes back to an address of this computer where the game waits ([code]http://127.0.0.1:&lt;port&gt;/[/code]); the game trades the code it gets for the token. In a web game: the page opens in a window of its own and comes back to [code]&lt;page&gt;.sign_in.html[/code], which the web export writes next to the game; Google's ID token comes straight back (with a nonce), the others' code with PKCE is traded by the game; call it when the player presses a button, or the browser blocks the window. Then [signal signed_in], and the token goes to [method Online.login] when an online game asks for a login ([b]Project Settings &gt; Online &gt; Login &gt; Check[/b]); or [signal sign_in_failed].
+				What it needs comes from the service's section in [b]Project Settings &gt; Authentication[/b], its block of this platform first (Desktop: each platform has its own client); [param options] given in code win. [param provider]: [code]"google"[/code] (Client Id and Client Secret of a "Desktop app" OAuth client; the token is Google's ID token), [code]"supabase"[/code] (a provider of the Supabase project, in [param options]: [code]{"provider": "google"}[/code], [code]"discord"[/code], [code]"github"[/code]...; the token is Supabase's), [code]"auth0"[/code] (Domain and Client Id; its ID token), or [code]"oauth"[/code] (the Custom section: [code]authorize_url[/code], [code]token_url[/code], [code]client_id[/code], [code]client_secret[/code], [code]scope[/code]). For all: [code]port[/code] (where the game waits: 0, any free one; a fixed one for services that want the return address registered), [code]redirect_uri[/code] (the return address exactly as the service has it registered, such as [code]"http://localhost:43210"[/code]: an address of this computer with its port; the game also waits on IPv6 for [code]localhost[/code]), [code]params[/code] (more for the sign-in page, such as [code]{"prompt": "select_account"}[/code]) and [code]token[/code] (which field of the service's answer: [code]id_token[/code] when there is one, else [code]access_token[/code]).
+				The player has 5 minutes ([method cancel_sign_in] stops it).
+			</description>
+		</method>
+		<method name="sign_out">
+			<return type="void" />
+			<description>
+				Forgets this game's session (an online game's login too); then [signal signed_out].
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="sign_in_failed">
+			<param index="0" name="reason" type="String" />
+			<description>
+				[method sign_in_with] did not sign in: the player said no, the service refused it, the window was blocked or closed, it took too long, or it was cancelled.
+			</description>
+		</signal>
+		<signal name="signed_in">
+			<param index="0" name="token" type="String" />
+			<param index="1" name="data" type="Dictionary" />
+			<description>
+				[method sign_in_with] signed in: [param token] (also [method get_token]; given to [method Online.login] already when an online game asks for a login), and [param data], the service's whole answer ([code]refresh_token[/code], [code]expires_in[/code]...).
+			</description>
+		</signal>
+		<signal name="signed_out">
+			<description>
+				[method sign_out] forgot the session.
+			</description>
+		</signal>
+	</signals>
+</class>
