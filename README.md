@@ -5,8 +5,10 @@ Players sign in with Google, Supabase, Firebase, Auth0 or any other service, as 
 - `authentication/`: the plugin as a project has it: its `plugin.json`, `web/sign_in.html` (the page a web
   game's sign-in comes back to, written next to the game by the web export), `doc_classes/` (the editor's help
   of the `Authentication` class) and its libraries in `bin/`.
-  Copy it into `<project>/plugins/` and enable it, or use **Add to Project** in Project Settings > Plugins
-  (Gobu has a copy next to the editor, in `Engine/Binaries/plugins/authentication`).
+  Install it from Gobu's **Edit > Plugins** (it downloads the latest release of this repository into
+  `<project>/plugins/authentication` and enables it), or copy it there by hand. Its image in that window is
+  `icon.svg`. A release has the three files of `forja package plugin <this repository>/authentication` (run
+  from Gobu): `authentication.zip`, `plugin.json` (with the package's size and SHA-256) and `icon.svg`.
 - `Source/`: its code, C++ against Gobu's plugin interface only (`gobu_plugin.h`, version 3), so it is a
   library of its own: Gobu loads it only in a project that enabled it. Built with Gobu's forja: this
   repository goes in `ProjectGobu/Plugins/Authentication`, next to Gobu, listed in Gobu's
