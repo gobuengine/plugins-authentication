@@ -201,7 +201,7 @@ typedef enum GobuClassFlags {
 
 typedef struct GobuClassInfo {
 	const char *name;
-	const char *parent; /* An engine class: "RefCounted", "Node", "Node2D"... */
+	const char *parent; /* An engine class: "Shared", "Actor", "Spatial2D"... */
 	uint32_t flags; /* GobuClassFlags */
 	void *userdata;
 	GobuCreateInstanceFunc create_instance;
@@ -292,7 +292,7 @@ typedef struct GobuPluginApi {
 	void (*variant_new_float)(GobuVariant *r_dest, double value);
 	void (*variant_new_string)(GobuVariant *r_dest, const char *utf8, int64_t length);
 	void (*variant_new_string_name)(GobuVariant *r_dest, const char *utf8, int64_t length);
-	void (*variant_new_object)(GobuVariant *r_dest, GobuObject *object); /* Keeps a RefCounted alive. */
+	void (*variant_new_object)(GobuVariant *r_dest, GobuObject *object); /* Keeps a Shared alive. */
 	void (*variant_new_packed_byte_array)(GobuVariant *r_dest, const uint8_t *data, int64_t size);
 	void (*variant_destroy)(GobuVariant *value);
 	int32_t (*variant_get_type)(const GobuVariant *value);
@@ -345,7 +345,7 @@ typedef struct GobuPluginApi {
 	GobuObject *(*get_singleton)(const char *name); /* "ProjectSettings", "Engine", "OS"... */
 	bool (*classdb_instantiate)(const char *class_name, GobuVariant *r_object);
 	/* The new object without a reference: hand it to a Variant (variant_new_object), which keeps a
-	 * RefCounted alive, or add it to the scene. classdb_instantiate is the safe form. */
+	 * Shared alive, or add it to the scene. classdb_instantiate is the safe form. */
 	GobuObject *(*classdb_construct_object)(const char *class_name);
 
 	/* Registration (only inside the init function). */
@@ -368,7 +368,7 @@ typedef struct GobuPluginApi {
 
 	/* Version 3. */
 	/* Only inside the init function, after register_class: a new object of `class_name` (a class of this
-	 * plugin, not a RefCounted nor GOBU_CLASS_HIDDEN) reached by `name` as the engine's singletons are
+	 * plugin, not a Shared nor GOBU_CLASS_HIDDEN) reached by `name` as the engine's singletons are
 	 * (`Name.method()` in a script, get_singleton).
 	 * The engine owns it and frees it at shutdown, before `deinitialize`. NULL if it can't be made. */
 	GobuObject *(*register_singleton)(GobuPluginHandle plugin, const char *name, const char *class_name);
