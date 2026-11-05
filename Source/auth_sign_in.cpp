@@ -412,6 +412,9 @@ int Authentication::sign_in_with(const std::string &p_provider, const Value &p_o
 	if (p_provider == "poki") {
 		return _sign_in_poki(); // Poki's own (auth_poki.cpp), in a web game on Poki.
 	}
+	if (p_provider == "crazygames") {
+		return _sign_in_crazygames(); // CrazyGames's own (auth_crazygames.cpp), in a web game on CrazyGames.
+	}
 	const bool web = gobu::has_feature("web");
 	if (!web && !gobu::has_feature("pc")) {
 		_later([this]() { _sign_in_failed("Signing in with Authentication.sign_in_with() works on computers and the web; on phones, the service's plugin signs in."); });
@@ -704,6 +707,7 @@ void Authentication::_sign_in_stop() {
 	signing_in = false;
 	sign_in_exchanging = false;
 	sign_in_poki = false;
+	sign_in_crazygames = false;
 	for (const Value &server : sign_in_servers) {
 		server.call("stop");
 	}

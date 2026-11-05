@@ -59,6 +59,7 @@ public:
 	std::vector<std::string> issuers; // The "iss" it takes (any, when empty).
 	std::vector<std::string> audiences; // The "aud" it takes, any of them (a text or a list in the token); any, when empty.
 	std::string account_claim = "sub";
+	std::map<std::string, std::string> required; // Claims that must have these values (CrazyGames: this game's gameId).
 	std::string secret; // HS256.
 
 	// The service's public keys (the JSON of its JWKS URL): RSA and P-256 keys, by "kid". Replaces the ones
@@ -87,6 +88,10 @@ public:
 		std::vector<std::string> issuers;
 		std::vector<std::string> audiences; // Each platform's client: a token for any of them is for this game.
 		std::string account_claim = "sub";
+		// A service whose tokens carry no issuer (CrazyGames): the game sends them as "<prefix><token>", and only
+		// that prefix picks it, never an issuer.
+		std::string prefix;
+		std::map<std::string, std::string> required;
 	};
 	// The services whose sections are filled in. Custom goes last: without an issuer (a secret only, p_secret),
 	// it takes the tokens no other service names.

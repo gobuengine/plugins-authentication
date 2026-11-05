@@ -88,6 +88,12 @@ std::string Authentication::account_of(const std::string &p_token) const {
 		return std::string();
 	}
 	const std::vector<AuthToken::Service> settings = AuthToken::services_from_settings(gobu::has_environment(SECRET_ENVIRONMENT));
+	for (const AuthToken::Service &service : settings) {
+		if (!service.prefix.empty() && p_token.rfind(service.prefix, 0) == 0) {
+			const std::string account = AuthToken::read_claim(p_token.substr(service.prefix.size()), service.account_claim);
+			return account.empty() ? std::string() : service.name + ":" + account;
+		}
+	}
 	const int index = AuthToken::service_for(settings, AuthToken::read_claim(p_token, "iss"));
 	const std::string account = index < 0 ? std::string() : AuthToken::read_claim(p_token, settings[index].account_claim);
 	return account.empty() ? std::string() : settings[index].name + ":" + account;
@@ -111,6 +117,7 @@ void Authentication::_configure_services() {
 		service.checker.issuers = service_settings.issuers;
 		service.checker.audiences = service_settings.audiences;
 		service.checker.account_claim = service_settings.account_claim;
+		service.checker.required = service_settings.required;
 		service.checker.secret = secret;
 		configured.push_back(service);
 	}
@@ -141,12 +148,26 @@ static void _answer(const Value &p_done, const std::string &p_account, const std
 
 // Which service by the token's issuer, then with that service's keys. The account is "<service>:<id>", so two
 // services never meet.
-void Authentication::check_token(const std::string &p_token, const Value &p_done) {
-	if (p_token.rfind(POKI_PREFIX, 0) == 0) {
-		_check_poki_token(p_token.substr(std::string(POKI_PREFIX).size()), p_done); // Poki checks it (auth_poki.cpp).
+void Authentication::check_token(const std::string &p_raw_token, const Value &p_done) {
+	if (p_raw_token.rfind(POKI_PREFIX, 0) == 0) {
+		_check_poki_token(p_raw_token.substr(std::string(POKI_PREFIX).size()), p_done); // Poki checks it (auth_poki.cpp).
 		return;
 	}
 	_configure_services();
+	// A service picked by its prefix (CrazyGames), or by the token's issuer.
+	int prefixed = -1;
+	std::string p_token = p_raw_token;
+	for (size_t i = 0; i < services.size(); i++) {
+		const std::string &prefix = services[i].settings.prefix;
+		if (!prefix.empty() && p_raw_token.rfind(prefix, 0) == 0) {
+			prefixed = int(i);
+			p_token = p_raw_token.substr(prefix.size());
+		}
+	}
+	if (prefixed < 0 && p_raw_token.rfind("crazygames:", 0) == 0) {
+		_answer(p_done, std::string(), "The login is from a service this game does not take.");
+		return;
+	}
 	Value header;
 	Value claims;
 	std::string signed_part;
@@ -159,7 +180,7 @@ void Authentication::check_token(const std::string &p_token, const Value &p_done
 	for (const Service &service : services) {
 		settings.push_back(service.settings);
 	}
-	const int index = AuthToken::service_for(settings, claims.get("iss", "").str());
+	const int index = prefixed >= 0 ? prefixed : AuthToken::service_for(settings, claims.get("iss", "").str());
 	if (index < 0) {
 		_answer(p_done, std::string(), "The login is from a service this game does not take.");
 		return;
@@ -396,6 +417,8 @@ bool Authentication::register_class() {
 	_setting("authentication/auth0/web/redirect_uri", "", HINT_PLACEHOLDER, "https://<host>/<game>.sign_in.html");
 	_setting("authentication/auth0/android/client_id", "", HINT_PLACEHOLDER, "A \"Native\" application");
 	_setting("authentication/auth0/ios/client_id", "", HINT_PLACEHOLDER, "A \"Native\" application");
+	// CrazyGames: the game's id there, which its players' tokens are for (getUserToken's "gameId").
+	_setting("authentication/crazygames/game_id", "", HINT_PLACEHOLDER, "The game's id on CrazyGames");
 	_setting("authentication/custom/keys_url", "");
 	_setting("authentication/custom/issuer", "");
 	_setting("authentication/custom/audience", "", HINT_PLACEHOLDER, "Each platform's client, separated by commas");

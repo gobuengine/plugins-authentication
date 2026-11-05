@@ -148,6 +148,26 @@ def poki():
 	check('a server without the team key turns Poki logins away', 'turned away: This server takes no Poki logins.' in s.log('srv_without_key'))
 
 
+def crazygames():
+	print('CrazyGames: a server checks CrazyGames logins with its keys (the mock\'s), for this game\'s id')
+	time.sleep(3)  # The games of the scenario before let go of the plugin's library.
+	proj = project('multi')
+	s = Scenario('crazygames')
+	s.launch('srv', proj, ['--online-serve=7788'], ['--verbose'], environment={'GOBU_CRAZYGAMES_KEYS_URL': 'http://127.0.0.1:18765/oauth2/v3/certs'})
+	time.sleep(4)
+	s.launch('player', proj, ['--token=crazygames:' + vectors['CRAZY_VALID'], '--online-join=127.0.0.1:7788', '--online-player=c1', '--salir=6'])
+	s.launch('other_game', proj, ['--token=crazygames:' + vectors['CRAZY_OTHER_GAME'], '--online-join=127.0.0.1:7788', '--online-player=c2', '--salir=6'])
+	s.launch('expired', proj, ['--token=crazygames:' + vectors['CRAZY_EXPIRED'], '--online-join=127.0.0.1:7788', '--online-player=c3', '--salir=6'])
+	s.launch('no_prefix', proj, ['--token=' + vectors['CRAZY_VALID'], '--online-join=127.0.0.1:7788', '--online-player=c4', '--salir=6'])
+	time.sleep(12)
+	s.end()
+	srv = s.log('srv')
+	check('a CrazyGames player gets in as "crazygames:<userId>"', 'logged in as "crazygames:cg-7"' in srv)
+	check('a token for another game on CrazyGames is turned away', 'turned away: The login is for another game.' in srv)
+	check('an expired CrazyGames token is turned away', 'turned away: The login expired: log in again.' in srv)
+	check('a CrazyGames token without its prefix is not taken for another service', srv.count('turned away: The login is from a service this game does not take.') >= 1)
+
+
 def sign_in():
 	print('Signing in in the browser (followed by the game): Google, a refusal, Supabase with Google')
 	google = project('google')
@@ -174,6 +194,7 @@ if not os.path.exists(os.path.join(PLUGIN, 'plugin.json')):
 login()
 multi()
 poki()
+crazygames()
 sign_in()
 print('%d failed' % len(failures) if failures else 'All passed')
 sys.exit(1 if failures else 0)

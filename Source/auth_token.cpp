@@ -281,6 +281,11 @@ AuthToken::Status AuthToken::check(const std::string &p_token, int64_t p_now, st
 			return WRONG_AUDIENCE;
 		}
 	}
+	for (const std::pair<const std::string, std::string> &claim : required) {
+		if (_claim_text(claims.get(claim.first)) != claim.second) {
+			return WRONG_AUDIENCE; // For another game.
+		}
+	}
 	r_account = _claim_text(claims.get(account_claim));
 	return r_account.empty() ? NO_ACCOUNT : VALID;
 }
@@ -357,6 +362,17 @@ std::vector<AuthToken::Service> AuthToken::services_from_settings(bool p_secret)
 		service.audiences = client_ids("auth0"); // Its ID tokens', one application per platform.
 		services.push_back(service);
 	}
+	// CrazyGames: its players' tokens (getUserToken, RS256), for this game's id there.
+	const std::string crazygames = text_setting("authentication/crazygames/game_id");
+	if (!crazygames.empty()) {
+		Service service;
+		service.name = "crazygames";
+		service.keys_url = gobu::has_environment("GOBU_CRAZYGAMES_KEYS_URL") ? gobu::environment("GOBU_CRAZYGAMES_KEYS_URL") : std::string("https://userportal.crazygames.com/.well-known/jwks.json");
+		service.account_claim = "userId";
+		service.prefix = "crazygames:";
+		service.required["gameId"] = crazygames;
+		services.push_back(service);
+	}
 	const std::string keys_url = text_setting("authentication/custom/keys_url");
 	const std::string issuer = text_setting("authentication/custom/issuer");
 	if (!keys_url.empty() || !issuer.empty() || (services.empty() && p_secret)) {
@@ -383,6 +399,9 @@ std::vector<AuthToken::Service> AuthToken::services_from_settings(bool p_secret)
 int AuthToken::service_for(const std::vector<Service> &p_services, const std::string &p_issuer) {
 	int any = -1;
 	for (size_t i = 0; i < p_services.size(); i++) {
+		if (!p_services[i].prefix.empty()) {
+			continue; // Picked by its prefix only.
+		}
 		if (text::has(p_services[i].issuers, p_issuer)) {
 			return int(i);
 		}

@@ -2,7 +2,7 @@
 	"id": "authentication",
 	"name": "Authentication",
 	"version": "1.1.0",
-	"description": "Players sign in with Google, Supabase, Firebase, Auth0, Poki or any other service: the game gets their token, to call the service's API or to join an online game, and a server checks it. Set it up in Project Settings > Authentication.",
+	"description": "Players sign in with Google, Supabase, Firebase, Auth0, Poki, CrazyGames or any other service: the game gets their token, to call the service's API or to join an online game, and a server checks it. Set it up in Project Settings > Authentication.",
 	"author": "Gobu",
 	"category": "Services",
 	"icon": "icon.svg",

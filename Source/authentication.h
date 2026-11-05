@@ -71,7 +71,7 @@ public:
 
 	// A server: whether a token is one of the services of the settings, for this game; then p_done(account,
 	// reason) (the account empty when it is not). It may answer later: the service's keys are read first.
-	void check_token(const std::string &p_token, const gobu::Value &p_done);
+	void check_token(const std::string &p_raw_token, const gobu::Value &p_done);
 
 	explicit Authentication(GobuObject *p_self);
 	~Authentication();
@@ -149,5 +149,12 @@ private:
 	int _sign_in_poki();
 	void _on_poki_sign_in(const gobu::Value &p_args);
 	void _check_poki_token(const std::string &p_token, const gobu::Value &p_done);
+
+	// CrazyGames (auth_crazygames.cpp): a web game on CrazyGames with the CrazyGames plugin. Its sign-in gives
+	// "crazygames:<its token>" (RS256, an hour), checked with CrazyGames's keys for this game's id (Project Settings >
+	// Authentication > CrazyGames > Game Id); the account is "crazygames:<userId>".
+	bool sign_in_crazygames = false;
+	int _sign_in_crazygames();
+	void _on_crazygames_sign_in(const gobu::Value &p_args);
 	void _emit(const char *p_signal, std::initializer_list<gobu::Value> p_args = {});
 };

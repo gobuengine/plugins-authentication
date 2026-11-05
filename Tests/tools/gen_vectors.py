@@ -16,6 +16,11 @@ vectors = {
 	'HS256_VALID': sign('HS256', dict(base, sub='user-3'), secret=b'super-secret'),
 	'EXPIRED': sign('RS256', dict(base, exp=PAST), 'rsa-1'),
 }
+# CrazyGames's tokens (getUserToken): no issuer, the player's userId and the game's gameId.
+crazy = {'userId': 'cg-7', 'gameId': '20267', 'username': 'user1', 'iat': PAST, 'exp': FUTURE}
+vectors['CRAZY_VALID'] = sign('RS256', crazy, 'rsa-1')
+vectors['CRAZY_OTHER_GAME'] = sign('RS256', dict(crazy, gameId='99999'), 'rsa-1')
+vectors['CRAZY_EXPIRED'] = sign('RS256', dict(crazy, exp=PAST), 'rsa-1')
 # The same claims with the signature of another token: tampered.
 h, p, s = vectors['RS256_VALID'].split('.')
 _, p2, _ = sign('RS256', dict(base, sub='admin'), 'rsa-1').split('.')
