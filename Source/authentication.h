@@ -154,6 +154,15 @@ private:
 	// "crazygames:<its token>" (RS256, an hour), checked with CrazyGames's keys for this game's id (Project Settings >
 	// Authentication > CrazyGames > Game Id); the account is "crazygames:<userId>".
 	bool sign_in_crazygames = false;
+
+	// itch.io (auth_itch.cpp): Authentication.sign_in_with("itch") is the OAuth sign-in of the game's itch.io OAuth
+	// application; the token is "itch:<access token>" (it doesn't expire, and doesn't say which game it is for). A
+	// server checks it with itch.io's API (its profile); the account is "itch:<user id>".
+	static constexpr const char *ITCH_PREFIX = "itch:";
+	static constexpr const char *ITCH_API_ENVIRONMENT = "GOBU_ITCH_API_URL"; // The tests' mock of api.itch.io.
+	GobuObjectId sign_in_profile_request = 0;
+	void _itch_sign_in_profile(const std::string &p_token);
+	void _check_itch_token(const std::string &p_token, const gobu::Value &p_done);
 	int _sign_in_crazygames();
 	void _on_crazygames_sign_in(const gobu::Value &p_args);
 	void _emit(const char *p_signal, std::initializer_list<gobu::Value> p_args = {});

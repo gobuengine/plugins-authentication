@@ -76,6 +76,24 @@ class Handler(BaseHTTPRequestHandler):
 		elif url.path in ('/auth/v1/.well-known/jwks.json', '/oauth2/v3/certs'):
 			print('MOCK jwks', url.path, flush=True)
 			self._send(200, JWKS)
+		elif url.path == '/itch/user/oauth':
+			# itch.io: the player accepts (here at once) and the browser goes back to the game with a code.
+			missing = [k for k in ('client_id', 'redirect_uri', 'state', 'code_challenge') if k not in q]
+			if missing or q.get('response_type') != 'code' or q.get('code_challenge_method') != 'S256' or q.get('scope') != 'profile:me':
+				print('MOCK itch bad request', missing, q, flush=True)
+				self._send(400, json.dumps({'error': 'invalid_request'}))
+				return
+			code = 'itch-' + secrets.token_urlsafe(8)
+			codes[code] = {'kind': 'itch', 'client_id': q['client_id'], 'redirect_uri': q['redirect_uri'], 'code_challenge': q['code_challenge']}
+			print('MOCK itch sign-in, back to %s' % q['redirect_uri'], flush=True)
+			self._back(q['redirect_uri'], {'code': code, 'state': q['state']})
+		elif url.path == '/itch/profile':
+			token = self.headers.get('Authorization', '')
+			print('MOCK itch profile', token, flush=True)
+			if token == 'Bearer itch-access-1':
+				self._send(200, json.dumps({'user': {'id': 4242, 'username': 'player1', 'display_name': 'Player One', 'cover_url': 'https://example.com/cover.png', 'gamer': True, 'developer': False, 'press_user': False, 'url': 'https://player1.itch.io'}}))
+			else:
+				self._send(401, json.dumps({'errors': ['invalid key']}))
 		elif url.path == '/o/oauth2/v2/auth':
 			# Google: the player signs in (here at once) and the browser goes back to the game.
 			if q.get('response_type') == 'id_token':
@@ -118,6 +136,19 @@ class Handler(BaseHTTPRequestHandler):
 		url = urlparse(self.path)
 		length = int(self.headers.get('Content-Length', 0))
 		raw = self.rfile.read(length) if length else b''
+		if url.path == '/itch/oauth/token':
+			form = {k: v[0] for k, v in parse_qs(raw.decode()).items()}
+			asked = codes.pop(form.get('code', ''), None)
+			ok = (asked and asked['kind'] == 'itch' and form.get('grant_type') == 'authorization_code' and form.get('client_id') == asked['client_id']
+				and form.get('redirect_uri') == asked['redirect_uri'] and 'client_secret' not in form
+				and challenge_of(form.get('code_verifier', '')) == asked['code_challenge'])
+			if not ok:
+				print('MOCK itch token refused', form, flush=True)
+				self._send(400, json.dumps({'error': 'invalid_grant'}))
+				return
+			print('MOCK itch token', flush=True)
+			self._send(200, json.dumps({'access_token': 'itch-access-1', 'token_type': 'bearer', 'scope': 'profile:me'}))
+			return
 		if url.path == '/token':
 			form = {k: v[0] for k, v in parse_qs(raw.decode()).items()}
 			asked = codes.pop(form.get('code', ''), None)

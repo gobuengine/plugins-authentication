@@ -16,6 +16,8 @@ login/check=1
 
 custom/keys_url="http://127.0.0.1:18765/oauth2/v3/certs"
 custom/audience="juego-de-prueba.apps.googleusercontent.com"
+itch/desktop/client_id="itch-de-prueba"
+itch/desktop/redirect_uri="http://127.0.0.1:43219/"
 
 [plugins]
 

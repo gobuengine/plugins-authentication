@@ -12,7 +12,8 @@ players, each with its own APPDATA:
   another game, an expired one or one without its prefix is turned away.
 - **Several services**: Supabase (password and Google) and Custom (its desktop and web clients are the same
   account); a token for another game and one of another service are turned away.
-- **Sign-in in the browser**: Google, a refusal, Supabase with Google; the game follows the sign-in page itself
+- **Sign-in in the browser**: Google, a refusal, Supabase with Google, itch.io (its OAuth with PKCE and its
+  profile, checked by the server; a forged token turned away); the game follows the sign-in page itself
   (`GOBU_SIGN_IN_FOLLOW`).
 
 Needs Python 3, openssl (the test keys, made on the first run) and Gobu built next to this repository

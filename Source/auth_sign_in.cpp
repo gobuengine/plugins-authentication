@@ -243,6 +243,13 @@ bool AuthSignIn::make_flow(const std::string &p_provider, const Value &p_options
 		}
 		flow.authorize_url = flow.supabase_url + "/auth/v1/authorize";
 		flow.token_url = flow.supabase_url + "/auth/v1/token?grant_type=pkce";
+	} else if (provider == "itch") {
+		// itch.io's OAuth applications: a code with PKCE, no secret (itch.io > Settings > OAuth applications).
+		flow.itch = true;
+		flow.authorize_url = "https://itch.io/user/oauth";
+		flow.token_url = "https://api.itch.io/oauth/token";
+		flow.scope = "profile:me";
+		flow.token_field = "access_token";
 	} else if (provider == "auth0") {
 		const std::string domain = AuthToken::auth0_domain(_option(p_options, "domain"));
 		if (domain.empty()) {
@@ -254,7 +261,7 @@ bool AuthSignIn::make_flow(const std::string &p_provider, const Value &p_options
 		flow.scope = "openid profile email";
 		flow.token_field = "id_token";
 	} else if (provider != "oauth") {
-		r_error = "Authentication.sign_in_with(): no provider \"" + p_provider + "\" (\"google\", \"supabase\", \"auth0\", or \"oauth\": the Custom service).";
+		r_error = "Authentication.sign_in_with(): no provider \"" + p_provider + "\" (\"google\", \"supabase\", \"auth0\", \"itch\", \"poki\", \"crazygames\", or \"oauth\": the Custom service).";
 		return false;
 	}
 	// Any service's addresses, and what each one asks for.
@@ -682,6 +689,10 @@ void Authentication::_on_sign_in_token(int p_result, int p_code, const std::stri
 		_sign_in_end(std::string(), Value::dictionary(), "The service's answer has no token.");
 		return;
 	}
+	if (sign_in_flow.itch) {
+		_itch_sign_in_profile(answer); // Then signed_in, with who the player is (auth_itch.cpp).
+		return;
+	}
 	_sign_in_end(answer, data, std::string());
 }
 
@@ -720,6 +731,9 @@ void Authentication::_sign_in_stop() {
 		gobu::call(page, "cancel_request");
 	}
 	if (GobuObject *request = gobu::object_of(sign_in_token_request)) {
+		gobu::call(request, "cancel_request");
+	}
+	if (GobuObject *request = gobu::object_of(sign_in_profile_request)) {
 		gobu::call(request, "cancel_request");
 	}
 	sign_in_verifier.clear();

@@ -36,6 +36,10 @@ fn _ready() void {
 			}
 			Authentication.sign_in_with("google", {"client_id": cliente, "client_secret": "secreto-cliente", "authorize_url": SUPABASE_URL + "/o/oauth2/v2/auth", "token_url": SUPABASE_URL + "/token"})
 			return
+		} elif arg == "--itch" {
+			print("TMPLOGIN itch")
+			Authentication.sign_in_with("itch", {"authorize_url": SUPABASE_URL + "/itch/user/oauth", "token_url": SUPABASE_URL + "/itch/oauth/token"})
+			return
 		} elif arg == "--supabase-google" {
 			print("TMPLOGIN supabase con google")
 			Authentication.sign_in_with("supabase", {"url": SUPABASE_URL, "key": SUPABASE_KEY, "provider": "google"})
@@ -70,6 +74,9 @@ fn _process(delta: float) void {
 
 on Authentication.signed_in(token: String, data: Dictionary) {
 	print("TMPLOGIN firmado " + str(data.has("refresh_token")) + " " + str(data.has("id_token")))
+	if data.get("service", "") == "itch" {
+		print("TMPLOGIN itch " + str(data.get("username", "")) + " " + str(data.get("id", "")) + " " + token.substr(0, 5))
+	}
 	SceneManager.load("main")
 }
 

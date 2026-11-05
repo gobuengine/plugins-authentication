@@ -65,6 +65,8 @@ struct AuthSignIn {
 		bool id_token_back = false;
 		// Supabase Auth: its own parameters (provider, redirect_to) and code exchange (grant_type=pkce).
 		bool supabase = false;
+		// itch.io: its token is not a JWT; the player's profile comes from its API after the code is traded.
+		bool itch = false;
 		std::string supabase_url;
 		std::string supabase_key;
 		std::string supabase_provider;

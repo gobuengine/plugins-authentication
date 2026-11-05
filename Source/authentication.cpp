@@ -149,6 +149,10 @@ static void _answer(const Value &p_done, const std::string &p_account, const std
 // Which service by the token's issuer, then with that service's keys. The account is "<service>:<id>", so two
 // services never meet.
 void Authentication::check_token(const std::string &p_raw_token, const Value &p_done) {
+	if (p_raw_token.rfind(ITCH_PREFIX, 0) == 0) {
+		_check_itch_token(p_raw_token.substr(std::string(ITCH_PREFIX).size()), p_done); // itch.io's API (auth_itch.cpp).
+		return;
+	}
 	if (p_raw_token.rfind(POKI_PREFIX, 0) == 0) {
 		_check_poki_token(p_raw_token.substr(std::string(POKI_PREFIX).size()), p_done); // Poki checks it (auth_poki.cpp).
 		return;
@@ -417,6 +421,12 @@ bool Authentication::register_class() {
 	_setting("authentication/auth0/web/redirect_uri", "", HINT_PLACEHOLDER, "https://<host>/<game>.sign_in.html");
 	_setting("authentication/auth0/android/client_id", "", HINT_PLACEHOLDER, "A \"Native\" application");
 	_setting("authentication/auth0/ios/client_id", "", HINT_PLACEHOLDER, "A \"Native\" application");
+	// itch.io: the game's OAuth application (itch.io > Settings > OAuth applications), a client per platform; its
+	// redirect URI exactly as the application has it (on a computer, http://127.0.0.1:<a port>/).
+	_setting("authentication/itch/desktop/client_id", "", HINT_PLACEHOLDER, "The OAuth application's client ID");
+	_setting("authentication/itch/desktop/redirect_uri", "", HINT_PLACEHOLDER, "http://127.0.0.1:<port>/, as the application has it");
+	_setting("authentication/itch/web/client_id", "", HINT_PLACEHOLDER, "The OAuth application's client ID");
+	_setting("authentication/itch/web/redirect_uri", "", HINT_PLACEHOLDER, "https://<host>/<game>.sign_in.html");
 	// CrazyGames: the game's id there, which its players' tokens are for (getUserToken's "gameId").
 	_setting("authentication/crazygames/game_id", "", HINT_PLACEHOLDER, "The game's id on CrazyGames");
 	_setting("authentication/custom/keys_url", "");

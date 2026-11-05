@@ -169,21 +169,27 @@ def crazygames():
 
 
 def sign_in():
-	print('Signing in in the browser (followed by the game): Google, a refusal, Supabase with Google')
+	print('Signing in in the browser (followed by the game): Google, a refusal, Supabase with Google, itch.io')
 	google = project('google')
 	login_proj = project('login')
 	s = Scenario('sign_in')
-	s.launch('srv_google', google, ['--online-serve=7781'], ['--verbose'])
+	itch_env = {'GOBU_ITCH_API_URL': 'http://127.0.0.1:18765/itch'}
+	s.launch('srv_google', google, ['--online-serve=7781'], ['--verbose'], environment=itch_env)
 	s.launch('srv_supabase', login_proj, ['--online-serve=7782'], ['--verbose'])
 	time.sleep(4)
 	s.launch('google', google, ['--google', '--online-join=127.0.0.1:7781', '--online-player=g1', '--salir=6'])
 	s.launch('refused', google, ['--google-niega', '--online-join=127.0.0.1:7781', '--online-player=g2', '--salir=6'])
 	s.launch('supabase', login_proj, ['--supabase-google', '--online-join=127.0.0.1:7782', '--online-player=s1', '--salir=6'])
+	s.launch('itch', google, ['--itch', '--online-join=127.0.0.1:7781', '--online-player=i1', '--salir=6'], environment=itch_env)
+	s.launch('itch_forged', google, ['--token=itch:forged', '--online-join=127.0.0.1:7781', '--online-player=i2', '--salir=6'])
 	time.sleep(14)
 	s.end()
 	check('Google: signed in, and the server takes it', 'logged in as "custom:' in s.log('srv_google'))
 	check('a refusal is sign_in_failed', 'TMPLOGIN no firmado The player said no.' in s.log('refused'))
 	check('Supabase with Google: signed in, and the server takes it', 'logged in as "supabase:' in s.log('srv_supabase'))
+	check('itch.io: signed in with its OAuth (a code with PKCE, no secret), and the player is its profile\'s', 'TMPLOGIN itch player1 4242 itch:' in s.log('itch'))
+	check('itch.io: the server checks the token with itch.io and takes it as "itch:<id>"', 'logged in as "itch:4242"' in s.log('srv_google'))
+	check('itch.io: a token itch.io does not take is turned away', 'turned away: itch.io did not take the login (a revoked or forged token).' in s.log('srv_google'))
 
 
 shutil.rmtree(RUN, ignore_errors=True)  # Each run from nothing: no saved data, no logs of the last one.
