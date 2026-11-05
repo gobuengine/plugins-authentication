@@ -1,6 +1,7 @@
 # Authentication
 
-Players sign in with Google, Supabase, Firebase, Auth0 or any other service, as a Gobu plugin.
+Players sign in with Google, Supabase, Firebase, Auth0, Poki (a web game on Poki, with the Poki plugin) or any
+other service, as a Gobu plugin.
 
 - `authentication/`: the plugin as a project has it: its `plugin.json`, `web/sign_in.html` (the page a web
   game's sign-in comes back to, written next to the game by the web export), `doc_classes/` (the editor's help

@@ -1,6 +1,6 @@
 module Login
 
-use node::Http as http : HTTPRequest
+use actor::Http as http : HTTPRequest
 
 SUPABASE_URL :: "http://127.0.0.1:18765"
 SUPABASE_KEY :: "anon-key"

@@ -142,6 +142,10 @@ static void _answer(const Value &p_done, const std::string &p_account, const std
 // Which service by the token's issuer, then with that service's keys. The account is "<service>:<id>", so two
 // services never meet.
 void Authentication::check_token(const std::string &p_token, const Value &p_done) {
+	if (p_token.rfind(POKI_PREFIX, 0) == 0) {
+		_check_poki_token(p_token.substr(std::string(POKI_PREFIX).size()), p_done); // Poki checks it (auth_poki.cpp).
+		return;
+	}
 	_configure_services();
 	Value header;
 	Value claims;

@@ -1,8 +1,8 @@
 gobu scene 1
 
-node Login : Node id 1 {
+actor Login : Actor id 1 {
 	script = code
 	metadata/_game_mode = { "player": "", "hud": "", "rules": "", "start": true }
-	node Http : HTTPRequest id 2 {
+	actor Http : HTTPRequest id 2 {
 	}
 }

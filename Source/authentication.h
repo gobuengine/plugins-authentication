@@ -138,5 +138,16 @@ private:
 	void _sign_in_stop();
 	void _sign_in_end(const std::string &p_token, const gobu::Value &p_data, const std::string &p_error);
 	void _sign_in_failed(const std::string &p_reason);
+
+	// Poki (auth_poki.cpp): a web game on poki.com with the Poki plugin, whose page has Poki's SDK. Its sign-in gives
+	// "poki:<Poki's token>" (it lasts a minute), and a server checks it with Poki with the game's team key, in an
+	// environment variable of the server (never in the project: it goes with the game).
+	static constexpr const char *POKI_PREFIX = "poki:";
+	static constexpr const char *POKI_KEY_ENVIRONMENT = "GOBU_POKI_TEAM_KEY";
+	static constexpr const char *POKI_VERIFY_ENVIRONMENT = "GOBU_POKI_VERIFY_URL"; // The tests' mock of Poki's.
+	bool sign_in_poki = false; // The sign-in going on is Poki's.
+	int _sign_in_poki();
+	void _on_poki_sign_in(const gobu::Value &p_args);
+	void _check_poki_token(const std::string &p_token, const gobu::Value &p_done);
 	void _emit(const char *p_signal, std::initializer_list<gobu::Value> p_args = {});
 };

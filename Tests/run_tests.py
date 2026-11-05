@@ -46,10 +46,10 @@ class Scenario:
 		self.mock = subprocess.Popen([sys.executable, os.path.join(TOOLS, 'mock_service.py')], stdout=open(os.path.join(self.logs, 'mock.log'), 'w'), stderr=subprocess.STDOUT, cwd=TOOLS)
 		time.sleep(1.5)
 
-	def launch(self, name, proj, args, extra=(), follow=True):
+	def launch(self, name, proj, args, extra=(), follow=True, environment=None):
 		appdata = os.path.join(RUN, 'appdata', os.path.basename(self.logs) + '_' + name)
 		os.makedirs(appdata, exist_ok=True)
-		env = dict(os.environ, APPDATA=appdata)
+		env = dict(os.environ, APPDATA=appdata, **(environment or {}))
 		if follow:
 			env['GOBU_SIGN_IN_FOLLOW'] = '1'  # The game follows the sign-in page itself: no browser.
 		log = open(os.path.join(self.logs, name + '.log'), 'w', encoding='utf-8')
@@ -127,6 +127,27 @@ def multi():
 	check('a token of another service is turned away', 'turned away: The login is from a service this game does not take.' in srv)
 
 
+def poki():
+	print('Poki: a server checks Poki logins with Poki (a mock of its user-vault), with the team key it has')
+	time.sleep(3)  # The games of the scenario before let go of the plugin's library.
+	proj = project('multi')
+	s = Scenario('poki')
+	poki_env = {'GOBU_POKI_TEAM_KEY': 'test-team-key', 'GOBU_POKI_VERIFY_URL': 'http://127.0.0.1:18765/auth/verify-token'}
+	s.launch('srv', proj, ['--online-serve=7786'], ['--verbose'], environment=poki_env)
+	s.launch('srv_without_key', proj, ['--online-serve=7787'], ['--verbose'], environment={'GOBU_POKI_VERIFY_URL': poki_env['GOBU_POKI_VERIFY_URL']})
+	time.sleep(4)
+	s.launch('player', proj, ['--token=poki:poki-good', '--online-join=127.0.0.1:7786', '--online-player=k1', '--salir=6'])
+	s.launch('old_token', proj, ['--token=poki:poki-old', '--online-join=127.0.0.1:7786', '--online-player=k2', '--salir=6'])
+	s.launch('no_key', proj, ['--token=poki:poki-good', '--online-join=127.0.0.1:7787', '--online-player=k3', '--salir=6'])
+	time.sleep(12)
+	s.end()
+	srv = s.log('srv')
+	check('a Poki player gets in as "poki:<user_id>"', 'logged in as "poki:user-42"' in srv)
+	check('a token Poki does not take is turned away', 'turned away: Poki did not take the login (an old or forged token).' in srv)
+	check('the team key goes to Poki with the token', 'MOCK poki verify Bearer poki-good test-team-key' in s.log('mock'))
+	check('a server without the team key turns Poki logins away', 'turned away: This server takes no Poki logins.' in s.log('srv_without_key'))
+
+
 def sign_in():
 	print('Signing in in the browser (followed by the game): Google, a refusal, Supabase with Google')
 	google = project('google')
@@ -152,6 +173,7 @@ if not os.path.exists(os.path.join(PLUGIN, 'plugin.json')):
 	sys.exit('No plugin folder at %s.' % PLUGIN)
 login()
 multi()
+poki()
 sign_in()
 print('%d failed' % len(failures) if failures else 'All passed')
 sys.exit(1 if failures else 0)

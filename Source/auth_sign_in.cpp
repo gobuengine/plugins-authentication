@@ -409,6 +409,9 @@ int Authentication::sign_in_with(const std::string &p_provider, const Value &p_o
 		GOBU_ERROR("Authentication.sign_in_with(): a sign-in is going on (Authentication.cancel_sign_in() to start another).");
 		return ERR_BUSY;
 	}
+	if (p_provider == "poki") {
+		return _sign_in_poki(); // Poki's own (auth_poki.cpp), in a web game on Poki.
+	}
 	const bool web = gobu::has_feature("web");
 	if (!web && !gobu::has_feature("pc")) {
 		_later([this]() { _sign_in_failed("Signing in with Authentication.sign_in_with() works on computers and the web; on phones, the service's plugin signs in."); });
@@ -700,6 +703,7 @@ void Authentication::_sign_in_follow(const std::string &p_address) {
 void Authentication::_sign_in_stop() {
 	signing_in = false;
 	sign_in_exchanging = false;
+	sign_in_poki = false;
 	for (const Value &server : sign_in_servers) {
 		server.call("stop");
 	}

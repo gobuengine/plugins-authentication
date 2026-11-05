@@ -64,7 +64,16 @@ class Handler(BaseHTTPRequestHandler):
 	def do_GET(self):
 		url = urlparse(self.path)
 		q = {k: v[0] for k, v in parse_qs(url.query).items()}
-		if url.path in ('/auth/v1/.well-known/jwks.json', '/oauth2/v3/certs'):
+		if url.path == '/auth/verify-token':
+			# Poki's user-vault: the player's user_id for a token of this team's game.
+			token = self.headers.get('Authorization', '')
+			key = self.headers.get('X-Poki-Team-Api-Key', '')
+			print('MOCK poki verify', token, key, flush=True)
+			if key == 'test-team-key' and token == 'Bearer poki-good':
+				self._send(200, '{"user_id": "user-42"}')
+			else:
+				self._send(401, '{"error": "invalid token"}')
+		elif url.path in ('/auth/v1/.well-known/jwks.json', '/oauth2/v3/certs'):
 			print('MOCK jwks', url.path, flush=True)
 			self._send(200, JWKS)
 		elif url.path == '/o/oauth2/v2/auth':

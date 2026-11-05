@@ -6,6 +6,8 @@ players, each with its own APPDATA:
 
 - **Login**: password logins, a guest, a forged token, an expired one, a wrong password, an account that comes
   back with its saved data.
+- **Poki**: a Poki login gets in as `poki:<user_id>` (a mock of Poki's user-vault, with the team key of
+  `GOBU_POKI_TEAM_KEY`), one Poki does not take is turned away, and so is any on a server without the key.
 - **Several services**: Supabase (password and Google) and Custom (its desktop and web clients are the same
   account); a token for another game and one of another service are turned away.
 - **Sign-in in the browser**: Google, a refusal, Supabase with Google; the game follows the sign-in page itself

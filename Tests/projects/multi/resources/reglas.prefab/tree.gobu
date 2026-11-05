@@ -1,5 +1,5 @@
 gobu prefab 1
 
-node Reglas : Node id 1 {
+actor Reglas : Actor id 1 {
 	script = code
 }

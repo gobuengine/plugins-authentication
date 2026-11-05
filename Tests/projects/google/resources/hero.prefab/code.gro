@@ -1,6 +1,6 @@
 module Hero
 
-use node::Hero as hero : Node2D
+use actor::Hero as hero : Spatial2D
 use interface::marcador as m
 
 mut t : float = 0.0
