@@ -12,6 +12,7 @@ module PluginAuthenticationBundle {
 	standalone = true
 	generate {
 		copy "../authentication/plugin.json" "out=//Engine/Binaries/plugins/authentication/plugin.json"
+		copy "../authentication/icon.svg" "out=//Engine/Binaries/plugins/authentication/icon.svg"
 		copy "../authentication/web/sign_in.html" "out=//Engine/Binaries/plugins/authentication/web/sign_in.html"
 		copy "../authentication/doc_classes/Authentication.xml" "out=//Engine/Binaries/plugins/authentication/doc_classes/Authentication.xml"
 		copy "../authentication/bin/authentication.windows.x86_64.dll" "out=//Engine/Binaries/plugins/authentication/bin/authentication.windows.x86_64.dll"
