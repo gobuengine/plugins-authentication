@@ -19,4 +19,4 @@ other service, as a Gobu plugin.
 
 Settings: Project Settings > Authentication (Google, Supabase, Firebase, Auth0, Custom; a block per
 platform). API: `Authentication.sign_in_with()`, `get_token()`, `check_token()`... Guide:
-https://gobuengine.org/plugins/01-authentication
+https://gobu.549gamestudio.com/plugins/01-authentication
