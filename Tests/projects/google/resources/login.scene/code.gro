@@ -54,7 +54,7 @@ fn _ready() void {
 	http.request(SUPABASE_URL + "/auth/v1/token?grant_type=password", ["apikey: " + SUPABASE_KEY, "Content-Type: application/json"], HTTPClient.METHOD_POST, datos.to_json())
 }
 
-on http.request_completed(result: int, code: int, headers: PackedStringArray, body: PackedByteArray) {
+on http.request_completed(result: int, code: int, headers: []String, body: []u8) {
 	if code != 200 {
 		print("TMPLOGIN fallo " + str(code) + " " + body.get_string_from_utf8())
 		return
