@@ -45,6 +45,6 @@ fn _process(delta: float) void {
 	}
 	if vivo >= salir {
 		print("TMPEV salgo")
-		get_tree().quit()
+		GameMode.quit_game()
 	}
 }
